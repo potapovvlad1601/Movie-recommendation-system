@@ -2,6 +2,7 @@
 backend/.venv/
 backend/__pycache__/
 *.pyc
+*.py[cod]
 
 # Frontend
 frontend/node_modules/
@@ -18,3 +19,6 @@ frontend/build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Database
+*.db
