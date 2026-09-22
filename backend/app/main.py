@@ -8,6 +8,7 @@ from app.core.security import hash_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
 
+from app.api.auth import router as auth_router
 
 app = FastAPI(
     title="Movie Recommendation System",
@@ -15,6 +16,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.include_router(auth_router)
 
 @app.get("/")
 async def root():
@@ -65,3 +67,31 @@ def create_user(
 
 # Убить все процессы taskkill /F /IM python.exe
 # Убить процес taskkill /PID 19004 /F
+
+
+
+
+# План
+#1. FastAPI
+#       ↓
+#2. PostgreSQL
+#       ↓
+#3. SQLAlchemy
+#       ↓
+#4. Alembic
+#       ↓
+#5. User model
+#       ↓
+#6. Registration / Login          ← сейчас
+#       ↓
+#7. JWT authentication
+#       ↓
+#8. TMDB API
+#       ↓
+#9. Movie endpoints
+#       ↓
+#10. Favorites / Watchlist / Ratings
+#       ↓
+#11. Recommendation Engine
+#       ↓
+#12. Tests
