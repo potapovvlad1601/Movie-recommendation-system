@@ -82,11 +82,11 @@ def create_user(
 #       ↓
 #5. User model
 #       ↓
-#6. Registration / Login          ← сейчас
+#6. Registration / Login
 #       ↓
 #7. JWT authentication
 #       ↓
-#8. TMDB API
+#8. TMDB API          ← сейчас
 #       ↓
 #9. Movie endpoints
 #       ↓
