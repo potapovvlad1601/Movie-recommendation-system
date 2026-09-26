@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
 
 from app.api.auth import router as auth_router
+from app.api.movies import router as movies_router
 
 app = FastAPI(
     title="Movie Recommendation System",
@@ -17,6 +18,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(movies_router)
 
 @app.get("/")
 async def root():
@@ -86,11 +88,11 @@ def create_user(
 #       ↓
 #7. JWT authentication
 #       ↓
-#8. TMDB API          ← сейчас
+#8. TMDB API
 #       ↓
 #9. Movie endpoints
 #       ↓
-#10. Favorites / Watchlist / Ratings
+#10. Favorites / Watchlist / Ratings          ← сейчас
 #       ↓
 #11. Recommendation Engine
 #       ↓

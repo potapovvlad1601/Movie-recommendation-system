@@ -1,5 +1,18 @@
-SECRET_KEY = "super-secret-key-change-later"
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ALGORITHM = "HS256"
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+class Settings(BaseSettings):
+    secret_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+
+    tmdb_api_token: str
+    tmdb_base_url: str = "https://api.themoviedb.org/3"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
+
+
+settings = Settings()

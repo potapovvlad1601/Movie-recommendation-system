@@ -4,11 +4,7 @@ from fastapi import HTTPException, status
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from app.core.config import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
-    ALGORITHM,
-    SECRET_KEY,
-)
+from app.core.config import settings
 
 password_hash = PasswordHash.recommended()
 
