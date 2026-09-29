@@ -1,39 +1,82 @@
+import { Link, useNavigate } from "react-router-dom";
 
 function Header() {
+    const navigate = useNavigate();
+
+    const token = localStorage.getItem("access_token");
+    const username = localStorage.getItem("username");
+
+    const isLoggedIn = Boolean(token);
+
+    function handleLogout() {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("username");
+
+        navigate("/", { replace: true });
+    }
+
     return (
         <header className="header">
             <div className="header-container">
-                <a href="/" className="logo">
+
+                <Link to="/" className="logo">
                     <span className="logo-icon">🎬</span>
                     MovieRec
-                </a>
+                </Link>
 
-                <nav className="navigation">
-                    <a href="/" className="nav-link active">
-                        Home
-                    </a>
+                {isLoggedIn && (
+                    <nav className="navigation">
+                        <Link to="/" className="nav-link">
+                            Home
+                        </Link>
 
-                    <a href="#" className="nav-link">
-                        Movies
-                    </a>
+                        <Link to="/movies" className="nav-link">
+                            Movies
+                        </Link>
 
-                    <a href="#" className="nav-link">
-                        My Recommendations
-                    </a>
-                </nav>
+                        <Link to="/recommendations" className="nav-link">
+                            My Recommendations
+                        </Link>
+                    </nav>
+                )}
 
                 <div className="header-actions">
-                    <button className="login-button">
-                        Login
-                    </button>
+                    {isLoggedIn ? (
+                        <>
+                            <button
+                                className="logout-button"
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </button>
 
-                    <button className="register-button">
-                        Register
-                    </button>
+                            <span className="username">
+                                {username}
+                            </span>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                className="login-button"
+                                onClick={() => navigate("/login")}
+                            >
+                                Login
+                            </button>
+
+                            <button
+                                className="register-button"
+                                onClick={() => navigate("/register")}
+                            >
+                                Register
+                            </button>
+                        </>
+                    )}
                 </div>
+
             </div>
         </header>
-    )
+    );
 }
 
-export default Header
+export default Header;
+
