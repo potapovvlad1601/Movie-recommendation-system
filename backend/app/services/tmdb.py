@@ -1,4 +1,3 @@
-import asyncio
 
 import httpx
 
@@ -50,17 +49,12 @@ async def get_movies(page: int = 1):
     response.raise_for_status()
 
     movies_data = response.json()
-    movie_details = await asyncio.gather(
-        *[
-            get_movie(movie["id"])
-            for movie in movies_data.get("results", [])
-        ]
-    )
 
     return {
         "page": movies_data["page"],
-        "results": movie_details,
+        "results": movies_data.get("results", []),
     }
+
 
 async def get_movie(movie_id: int):
     url = f"{settings.tmdb_base_url}/movie/{movie_id}"

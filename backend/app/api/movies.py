@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query
 from app.services.tmdb import get_movie, get_movies, search_movies
 from app.schemas.movie import (
     MovieDetailExtendedSchema,
-    MovieBaseResponse,
+    MovieListResponse,
     MovieSearchResponse,
 )
 
@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=MovieBaseResponse)
+@router.get("", response_model=MovieListResponse)
 async def get_movies_list(page: int = Query(default=1, ge=1)):
     return await get_movies(page)
 
