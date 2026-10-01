@@ -72,32 +72,25 @@ def remove_from_favorites(
 
     db.commit()
 
-@router.delete(
-    "/favorites/{movie_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+@router.get(
+    "/favorites",
+    response_model=UserMovieListResponse,
 )
-def remove_from_favorites(
-    movie_id: int,
+def get_favorites(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    user_movie = db.query(UserMovie).filter(
+    query = db.query(UserMovie).filter(
         UserMovie.user_id == current_user.id,
-        UserMovie.movie_id == movie_id,
-    ).first()
+        UserMovie.is_favorite.is_(True),
+    )
 
-    if user_movie is None or not user_movie.is_favorite:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Movie not found in favorites",
-        )
+    items = query.order_by(UserMovie.created_at.desc()).all()
 
-    user_movie.is_favorite = False
-
-    if not user_movie.in_watchlist and user_movie.rating is None:
-        db.delete(user_movie)
-
-    db.commit()
+    return {
+        "items": items,
+        "total": len(items),
+    }
 
 
 # Watchlist
@@ -212,36 +205,6 @@ def rate_movie(
 
     return user_movie
 
-@router.put(
-    "/ratings/{movie_id}",
-    response_model=UserMovieResponse,
-)
-def rate_movie(
-    movie_id: int,
-    rating_data: RatingUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    user_movie = db.query(UserMovie).filter(
-        UserMovie.user_id == current_user.id,
-        UserMovie.movie_id == movie_id,
-    ).first()
-
-    if user_movie is None:
-        user_movie = UserMovie(
-            user_id=current_user.id,
-            movie_id=movie_id,
-            rating=rating_data.rating,
-        )
-        db.add(user_movie)
-    else:
-        user_movie.rating = rating_data.rating
-
-    db.commit()
-    db.refresh(user_movie)
-
-    return user_movie
-
 @router.get(
     "/ratings",
     response_model=UserMovieListResponse,
@@ -261,3 +224,30 @@ def get_ratings(
         "items": items,
         "total": len(items),
     }
+
+@router.delete(
+    "/ratings/{movie_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_rating(
+    movie_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    user_movie = db.query(UserMovie).filter(
+        UserMovie.user_id == current_user.id,
+        UserMovie.movie_id == movie_id,
+    ).first()
+
+    if user_movie is None or user_movie.rating is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Rating not found",
+        )
+
+    user_movie.rating = None
+
+    if not user_movie.is_favorite and not user_movie.in_watchlist:
+        db.delete(user_movie)
+
+    db.commit()

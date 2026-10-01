@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-import { getMovieById } from "../services/api";
+import {
+    getMovieById,
+    getFavorites,
+    addToFavorites,
+    removeFromFavorites,
+    getWatchlist,
+    addToWatchlist,
+    removeFromWatchlist,
+    getRatings,
+    rateMovie,
+    removeRating,
+} from "../services/api";
 
 function MovieDetails() {
     const { movieId } = useParams();
@@ -10,6 +21,16 @@ function MovieDetails() {
     const [movie, setMovie] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [inWatchlist, setInWatchlist] = useState(false);
+    const [userRating, setUserRating] = useState(null);
+
+    const [userActionsLoading, setUserActionsLoading] = useState(false);
+    const [actionError, setActionError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const isLoggedIn = Boolean(localStorage.getItem("access_token"));
 
     useEffect(() => {
         async function loadMovie() {
@@ -28,8 +49,117 @@ function MovieDetails() {
             }
         }
 
+        async function loadUserActions() {
+            if (!isLoggedIn) {
+                setIsFavorite(false);
+                setInWatchlist(false);
+                setUserRating(null);
+                return;
+            }
+
+            try {
+                setUserActionsLoading(true);
+                setActionError("");
+
+                const [favoritesData, watchlistData, ratingsData] =
+                    await Promise.all([
+                        getFavorites(),
+                        getWatchlist(),
+                        getRatings(),
+                    ]);
+
+                const numericMovieId = Number(movieId);
+
+                setIsFavorite(
+                    favoritesData.items.some(
+                        (item) => item.movie_id === numericMovieId
+                    )
+                );
+
+                setInWatchlist(
+                    watchlistData.items.some(
+                        (item) => item.movie_id === numericMovieId
+                    )
+                );
+
+                const ratingEntry = ratingsData.items.find(
+                    (item) => item.movie_id === numericMovieId
+                );
+
+                setUserRating(ratingEntry?.rating ?? null);
+            } catch (error) {
+                console.error(error);
+                setActionError(error.message);
+            } finally {
+                setUserActionsLoading(false);
+            }
+        }
+
         loadMovie();
-    }, [movieId]);
+        loadUserActions();
+    },[movieId, isLoggedIn]);
+
+    async function handleFavorite() {
+        try {
+            setIsSubmitting(true);
+            setActionError("");
+
+            if (isFavorite) {
+                await removeFromFavorites(movieId);
+                setIsFavorite(false);
+            } else {
+                await addToFavorites(movieId);
+                setIsFavorite(true);
+            }
+        } catch (error) {
+            console.error(error);
+            setActionError(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    async function handleWatchlist() {
+        try {
+            setIsSubmitting(true);
+            setActionError("");
+
+            if (inWatchlist) {
+                await removeFromWatchlist(movieId);
+                setInWatchlist(false);
+            } else {
+                await addToWatchlist(movieId);
+                setInWatchlist(true);
+            }
+        } catch (error) {
+            console.error(error);
+            setActionError(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    async function handleRatingChange(event) {
+        const newRating = Number(event.target.value);
+
+        try {
+            setIsSubmitting(true);
+            setActionError("");
+
+            if (newRating === 0) {
+                await removeRating(movieId);
+                setUserRating(null);
+            } else {
+                await rateMovie(movieId, newRating);
+                setUserRating(newRating);
+            }
+        } catch (error) {
+            console.error(error);
+            setActionError(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
     if (loading) {
         return (
@@ -68,12 +198,6 @@ function MovieDetails() {
 
     return (
         <main className="details-container">
-            <button
-                className="back-button"
-                onClick={() => navigate(-1)}
-            >
-                ← Back to movies
-            </button>
 
             <section className="movie-details">
                 <div className="details-backdrop">
@@ -112,6 +236,60 @@ function MovieDetails() {
                                 Official website ↗
                             </a>
                         )}
+
+                        <div className="movie-actions">
+                            {isLoggedIn ? (
+                                <>
+                                    <div className="movie-actions-buttons">
+                                        <button
+                                            className={`action-button ${isFavorite ? "active" : ""}`}
+                                            onClick={handleFavorite}
+                                            disabled={isSubmitting}
+                                        >
+                                            {isFavorite ? "♥ In Favorites" : "♡ Add to Favorites"}
+                                        </button>
+
+                                        <button
+                                            className={`action-button ${inWatchlist ? "active" : ""}`}
+                                            onClick={handleWatchlist}
+                                            disabled={isSubmitting}
+                                        >
+                                            {inWatchlist ? "✓ In Watchlist" : "+ Add to Watchlist"}
+                                        </button>
+                                    </div>
+
+                                    <div className="rating-control">
+                                        <label htmlFor="movie-rating">Your rating</label>
+
+                                        <select
+                                            id="movie-rating"
+                                            value={userRating ?? 0}
+                                            onChange={handleRatingChange}
+                                            disabled={isSubmitting}
+                                        >
+                                            <option value={0}>Not rated</option>
+
+                                            {Array.from({ length: 10 }, (_, index) => (
+                                                <option key={index + 1} value={index + 1}>
+                                                    {index + 1} / 10
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {actionError && (
+                                        <p className="action-error">{actionError}</p>
+                                    )}
+                                </>
+                            ) : (
+                                <button
+                                    className="action-button"
+                                    onClick={() => navigate("/login")}
+                                >
+                                    Sign in to save movies
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="details-info">
