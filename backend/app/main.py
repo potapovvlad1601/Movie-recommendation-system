@@ -12,6 +12,7 @@ from app.schemas.user import UserCreate, UserResponse
 
 from app.api.auth import router as auth_router
 from app.api.movies import router as movies_router
+from app.api.user_movies import router as user_movies_router
 
 app = FastAPI(
     title="Movie Recommendation System",
@@ -36,6 +37,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(movies_router)
+app.include_router(user_movies_router)
 
 @app.get("/")
 async def root():
