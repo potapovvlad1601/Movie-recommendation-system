@@ -87,3 +87,53 @@ async def get_movie(movie_id: int):
     movie_data["director"] = director
 
     return movie_data
+
+
+async def get_movie_recommendations(movie_id: int, page: int = 1):
+    url = f"{settings.tmdb_base_url}/movie/{movie_id}/recommendations"
+
+    params = {
+        "language": "en-US",
+        "page": page,
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            url,
+            headers=get_tmdb_headers(),
+            params=params,
+        )
+
+    response.raise_for_status()
+
+    movies_data = response.json()
+
+    return {
+        "page": movies_data["page"],
+        "results": movies_data.get("results", []),
+    }
+
+
+async def get_similar_movies(movie_id: int, page: int = 1):
+    url = f"{settings.tmdb_base_url}/movie/{movie_id}/similar"
+
+    params = {
+        "language": "en-US",
+        "page": page,
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            url,
+            headers=get_tmdb_headers(),
+            params=params,
+        )
+
+    response.raise_for_status()
+
+    movies_data = response.json()
+
+    return {
+        "page": movies_data["page"],
+        "results": movies_data.get("results", []),
+    }

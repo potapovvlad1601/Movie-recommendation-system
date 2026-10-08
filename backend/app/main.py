@@ -111,8 +111,8 @@ def create_user(
 #       ↓
 #9. Movie endpoints
 #       ↓
-#10. Favorites / Watchlist / Ratings          ← сейчас
+#10. Favorites / Watchlist / Ratings
 #       ↓
-#11. Recommendation Engine
+#11. Recommendation Engine          ← сейчас
 #       ↓
 #12. Tests
