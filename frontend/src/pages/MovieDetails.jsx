@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import {
     getMovieById,
@@ -18,9 +19,12 @@ function MovieDetails() {
     const { movieId } = useParams();
     const navigate = useNavigate();
 
-    const [movie, setMovie] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { data: movie, isLoading, isError, error } = useQuery({
+        queryKey: ["movie", movieId],
+        queryFn: () => getMovieById(movieId),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
 
     const [isFavorite, setIsFavorite] = useState(false);
     const [inWatchlist, setInWatchlist] = useState(false);
@@ -33,22 +37,6 @@ function MovieDetails() {
     const isLoggedIn = Boolean(localStorage.getItem("access_token"));
 
     useEffect(() => {
-        async function loadMovie() {
-            try {
-                setLoading(true);
-                setError(null);
-
-                const data = await getMovieById(movieId);
-
-                setMovie(data);
-            } catch (error) {
-                console.error(error);
-                setError("Failed to load movie details");
-            } finally {
-                setLoading(false);
-            }
-        }
-
         async function loadUserActions() {
             if (!isLoggedIn) {
                 setIsFavorite(false);
@@ -95,9 +83,8 @@ function MovieDetails() {
             }
         }
 
-        loadMovie();
         loadUserActions();
-    },[movieId, isLoggedIn]);
+    }, [movieId, isLoggedIn]);
 
     async function handleFavorite() {
         try {
@@ -161,7 +148,7 @@ function MovieDetails() {
         }
     }
 
-    if (loading) {
+    if (isLoading) {
         return (
             <main className="details-container">
                 <p className="status-message">
@@ -171,11 +158,11 @@ function MovieDetails() {
         );
     }
 
-    if (error || !movie) {
+    if (isError || !movie) {
         return (
             <main className="details-container">
                 <p className="status-message error">
-                    {error || "Movie not found"}
+                    {error?.message || "Movie not found"}
                 </p>
 
                 <button

@@ -1,6 +1,7 @@
 
 const API_URL = "http://127.0.0.1:8000";
 
+// Sync function
 async function getErrorMessage(response, fallbackMessage) {
     try {
         const data = await response.json();
@@ -54,18 +55,8 @@ async function authenticatedRequest(endpoint, options = {}) {
     return await response.json();
 }
 
-export async function getMovies(page = 1) {
-    const response = await fetch(
-        `${API_URL}/api/movies?page=${page}`
-    );
 
-    if (!response.ok) {
-        throw new Error("Failed to fetch movies");
-    }
-
-    return await response.json();
-}
-
+// User Authentication
 export async function loginUser(username, password) {
     const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
@@ -113,6 +104,8 @@ export async function registerUser(userData) {
     return data;
 }
 
+
+// Movies ffiches
 export async function getMovieById(movieId) {
     const response = await fetch(
         `${API_URL}/api/movies/${movieId}`
@@ -137,8 +130,26 @@ export async function searchMovies(query) {
     return await response.json();
 }
 
-// Favorites
+export async function getMovies(page = 1) {
+    const response = await fetch(
+        `${API_URL}/api/movies?page=${page}`
+    );
 
+    if (!response.ok) {
+        throw new Error("Failed to fetch movies");
+    }
+
+    return await response.json();
+}
+
+export async function getRecommendations(limit = 20) {
+    return await authenticatedRequest(
+        `/api/movies/recommendations?limit=${limit}`
+    );
+}
+
+
+// Favorites
 export async function getFavorites() {
     return await authenticatedRequest("/api/users/me/favorites");
 }
@@ -161,8 +172,8 @@ export async function removeFromFavorites(movieId) {
     );
 }
 
-// Watchlist
 
+// Watchlist
 export async function getWatchlist() {
     return await authenticatedRequest("/api/users/me/watchlist");
 }
@@ -185,8 +196,8 @@ export async function removeFromWatchlist(movieId) {
     );
 }
 
-// Ratings
 
+// Ratings
 export async function getRatings() {
     return await authenticatedRequest("/api/users/me/ratings");
 }

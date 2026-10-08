@@ -1,71 +1,44 @@
 
-import { useEffect, useState } from "react";
-import { getMovies, searchMovies } from "../services/api";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getMovies, searchMovies } from "../services/api";
 
 function Home() {
-    const [movies, setMovies] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
-    const [searchError, setSearchError] = useState(null);
 
     const navigate = useNavigate();
 
-    // Загрузка популярных фильмов
-    async function loadPopularMovies() {
-        try {
-            setLoading(true);
-            setError(null);
-            setSearchError(null);
+    const trimmedQuery = searchQuery.trim();
 
-            const data = await getMovies(1);
+    const { data, isLoading, isError, error } = useQuery({
+        queryKey: ["movies", { mode: isSearching ? "search" : "popular", q: trimmedQuery }],
+        queryFn: async () => {
+            if (isSearching && trimmedQuery) {
+                const res = await searchMovies(trimmedQuery);
+                return Array.isArray(res) ? { results: res } : { results: res?.results ?? [] };
+            } else {
+                const res = await getMovies(1);
+                return Array.isArray(res) ? { results: res } : { results: res?.results ?? [] };
+            }
+        },
+        enabled: isSearching ? Boolean(trimmedQuery) : true,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+        // сохраняем предыдущие данные при переключении между популярными/поиском
+        placeholderData: (prev) => prev,
+    });
 
-            setMovies(data.results);
-            setIsSearching(false);
-        } catch (error) {
-            console.error(error);
-            setError("Failed to load movies");
-        } finally {
-            setLoading(false);
-        }
-    }
+    const movies = data?.results ?? [];
 
-    // Первоначальная загрузка при открытии страницы
-    useEffect(() => {
-        loadPopularMovies();
-    }, []);
-
-    // Обработка поискового запроса
     async function handleSearch(event) {
         event.preventDefault();
-
-        const query = searchQuery.trim();
-
-        // Если строка пустая, возвращаем популярные фильмы
-        if (!query) {
-            await loadPopularMovies();
+        if (!trimmedQuery) {
+            setIsSearching(false);
             return;
         }
-
-        try {
-            setLoading(true);
-            setError(null);
-            setSearchError(null);
-            setIsSearching(true);
-
-            const data = await searchMovies(query);
-
-            setMovies(data.results);
-        } catch (error) {
-            console.error(error);
-            setSearchError("Failed to search movies");
-            setMovies([]);
-        } finally {
-            setLoading(false);
-        }
+        setIsSearching(true);
     }
 
     return (
@@ -103,7 +76,7 @@ function Home() {
                         <button
                             type="submit"
                             className="search-button"
-                            disabled={loading}
+                            disabled={isLoading}
                         >
                             Search
                         </button>
@@ -124,7 +97,7 @@ function Home() {
                     )}
                 </div>
 
-                {loading && (
+                {isLoading && (
                     <p className="status-message">
                         {isSearching
                             ? "Searching movies..."
@@ -132,19 +105,13 @@ function Home() {
                     </p>
                 )}
 
-                {error && (
+                {isError && (
                     <p className="status-message error">
-                        {error}
+                        {error?.message || (isSearching ? "Failed to search movies" : "Failed to load movies")}
                     </p>
                 )}
 
-                {searchError && (
-                    <p className="status-message error">
-                        {searchError}
-                    </p>
-                )}
-
-                {!loading && !error && !searchError && movies.length === 0 && (
+                {!isLoading && !isError && movies.length === 0 && (
                     <p className="status-message">
                         {isSearching
                             ? "No movies found."
@@ -152,7 +119,7 @@ function Home() {
                     </p>
                 )}
 
-                {!loading && !error && !searchError && movies.length > 0 && (
+                {!isLoading && !isError && movies.length > 0 && (
                     <div className="movie-grid">
                         {movies.map((movie) => (
                             <div

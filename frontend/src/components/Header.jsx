@@ -35,7 +35,7 @@ function Header() {
                         </Link>
 
                         <Link to="/recommendations" className="nav-link">
-                            My Recommendations
+                            Recommendations
                         </Link>
                     </nav>
                 )}

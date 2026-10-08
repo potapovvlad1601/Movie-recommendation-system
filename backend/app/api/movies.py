@@ -120,7 +120,7 @@ async def get_recommendations(
     # ориентироваться на рейтинг TMDB.
     result.sort(
         key=lambda movie: (
-            movie["recommendation_count"],
+            recommendation_counts[movie["id"]],
             movie.get("vote_average", 0),
         ),
         reverse=True,
