@@ -13,6 +13,7 @@ import {
     getRatings,
     rateMovie,
     removeRating,
+    getSimilarMovies,
 } from "../services/api";
 
 function MovieDetails() {
@@ -35,6 +36,9 @@ function MovieDetails() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isLoggedIn = Boolean(localStorage.getItem("access_token"));
+
+    const [similarMovies, setSimilarMovies] = useState([]);
+    const [similarMoviesError, setSimilarMoviesError] = useState("");
 
     useEffect(() => {
         async function loadUserActions() {
@@ -85,6 +89,22 @@ function MovieDetails() {
 
         loadUserActions();
     }, [movieId, isLoggedIn]);
+
+    useEffect(() => {
+        const fetchSimilarMovies = async () => {
+            try {
+                setSimilarMoviesError("");
+
+                const data = await getSimilarMovies(movieId);
+                setSimilarMovies(data.results ?? []);
+            } catch (error) {
+                console.error("Failed to load similar movies:", error);
+                setSimilarMoviesError("Failed to load similar movies.");
+            }
+        };
+
+        fetchSimilarMovies();
+    }, [movieId]);
 
     async function handleFavorite() {
         try {
@@ -376,6 +396,66 @@ function MovieDetails() {
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <section className="movies-section similar-movies-section">
+                <div className="section-header">
+                    <div>
+                        <h2>Similar Movies</h2>
+                        <p className="recommendations-description">
+                            Movies you might also enjoy
+                        </p>
+                    </div>
+                </div>
+
+                {similarMoviesError ? (
+                    <p className="status-message error">
+                        {similarMoviesError}
+                    </p>
+                ) : similarMovies.length === 0 ? (
+                    <p className="status-message">
+                        No similar movies found.
+                    </p>
+                ) : (
+                    <div className="movie-grid">
+                        {similarMovies.map((similarMovie) => (
+                            <div
+                                key={similarMovie.id}
+                                className="movie-card"
+                                onClick={() => navigate(`/movies/${similarMovie.id}`)}
+                            >
+                                <div className="movie-poster">
+                                    {similarMovie.poster_path ? (
+                                        <img
+                                            src={`https://image.tmdb.org/t/p/w500${similarMovie.poster_path}`}
+                                            alt={similarMovie.title}
+                                            loading="lazy"
+                                        />
+                                    ) : (
+                                        <span>🎬</span>
+                                    )}
+                                </div>
+
+                                <div className="movie-info">
+                                    <h3>{similarMovie.title}</h3>
+
+                                    <div className="movie-meta">
+                                        <p>
+                                            {similarMovie.release_date
+                                                ? similarMovie.release_date.slice(0, 4)
+                                                : "Release date unknown"}
+                                        </p>
+
+                                        <span className="movie-rating">
+                                ★{" "}
+                                            {Number(similarMovie.vote_average || 0).toFixed(1)}
+                            </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </section>
         </main>
     );

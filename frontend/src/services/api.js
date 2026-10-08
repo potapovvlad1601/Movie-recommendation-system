@@ -105,7 +105,7 @@ export async function registerUser(userData) {
 }
 
 
-// Movies ffiches
+// Movies fiches
 export async function getMovieById(movieId) {
     const response = await fetch(
         `${API_URL}/api/movies/${movieId}`
@@ -148,6 +148,17 @@ export async function getRecommendations(limit = 20) {
     );
 }
 
+export async function getSimilarMovies(movieId, page = 1) {
+    const response = await fetch(
+        `${API_URL}/api/movies/${movieId}/similar?page=${page}`
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to load similar movies");
+    }
+
+    return await response.json();
+}
 
 // Favorites
 export async function getFavorites() {

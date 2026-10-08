@@ -13,6 +13,7 @@ from app.services.tmdb import (
     get_movies,
     search_movies,
     get_movie_recommendations,
+    get_similar_movies,
 )
 
 from app.schemas.movie import (
@@ -143,7 +144,15 @@ async def get_movie_recommendations_endpoint(
     return await get_movie_recommendations(movie_id)
 
 
+@router.get("/{movie_id}/similar")
+async def get_similar_movies_endpoint(
+    movie_id: int,
+    page: int = Query(default=1, ge=1),
+):
+    return await get_similar_movies(movie_id, page)
+
 @router.get("/{movie_id}", response_model=MovieDetailExtendedSchema)
 async def get_movie_details(movie_id: int):
     return await get_movie(movie_id)
+
 
